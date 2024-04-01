@@ -1,0 +1,26 @@
+apiVersion: 1
+
+providers:
+- name: Default # A uniquely identifiable name for the provider
+  # folder: Services # The folder where to place the dashboard
+  type: file
+  options:
+    path: /var/lib/grafana/dashboards/docker-monitoring.json
+
+- name: Node-Exporter-Full # A uniquely identifiable name for the provider
+  # folder: Services # The folder where to place the dashboard
+  type: file
+  options:
+    path: /var/lib/grafana/dashboards/node-exporter-full.json
+
+- name: Node-Exporter-en # A uniquely identifiable name for the provider
+  # folder: Services # The folder where to place the dashboard
+  type: file
+  options:
+    path: /var/lib/grafana/dashboards/node-exporter-en.json
+
+- name: NLinux-Host-Metrics # A uniquely identifiable name for the provider
+  # folder: Services # The folder where to place the dashboard
+  type: file
+  options:
+    path: /var/lib/grafana/dashboards/linux-host-metrics.json

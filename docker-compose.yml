@@ -1,0 +1,94 @@
+version: "3"
+# networks: 
+#   monitoring: 
+#     driver: bridge
+services:
+  cadvisor:
+    container_name: cadvisor
+    image: gcr.io/cadvisor/cadvisor:latest
+    network_mode: "host"
+    ports:
+      - "8080:8080"
+    # networks: 
+    #   - monitoring 
+    volumes: 
+      - "/:/rootfs"
+      - "/var/run:/var/run"
+      - "/sys:/sys"
+      - "/var/lib/docker/:/var/lib/docker"
+      - "/dev/disk/:/dev/disk"
+    privileged: true
+    devices: 
+      - "/dev/kmsg"
+
+  node-exporter: 
+    image: prom/node-exporter:latest 
+    container_name: node-exporter 
+    restart: unless-stopped 
+    network_mode: "host"
+    volumes: 
+      - /proc:/host/proc:ro 
+      - /sys:/host/sys:ro 
+      - /:/rootfs:ro 
+    command: 
+      - '--path.procfs=/host/proc' 
+      - '--path.rootfs=/rootfs' 
+      - '--path.sysfs=/host/sys' 
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)' 
+    ports: 
+      - 9100:9100
+    # networks: 
+    #   - monitoring 
+
+  prometheus:
+    container_name: prometheus
+    image: prom/prometheus:latest
+    network_mode: "host"
+    ports:
+      - "9090:9090"
+    # networks: 
+    #   - monitoring 
+    volumes: 
+      - "./prometheus.yml:/etc/prometheus/prometheus.yml"
+    privileged: true
+    depends_on:
+      - cadvisor
+      - node-exporter
+
+  grafana:
+    container_name: grafana
+    image: grafana/grafana:latest
+    network_mode: "host"
+    ports:
+      - "3000:3000"
+    # networks: 
+    #   - monitoring 
+    environment:
+      - GF_PATHS_PROVISIONING=/etc/grafana/provisioning
+      - DS_PROMETHEUS=prometheus
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=grafana
+    volumes: 
+      - "grafana-data:/var/lib/grafana"
+      - "./datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml"
+      - "./docker-monitoring.json:/var/lib/grafana/dashboards/docker-monitoring.json"
+      - "./linux-host-metrics.json:/var/lib/grafana/dashboards/linux-host-metrics.json"
+      - "./node-exporter-en.json:/var/lib/grafana/dashboards/node-exporter-en.json"
+      - "./node-exporter-full.json:/var/lib/grafana/dashboards/node-exporter-full.json"
+      - "./default.yml:/etc/grafana/provisioning/dashboards/default.yml"
+    privileged: true
+    depends_on:
+      - prometheus
+      - redis
+
+  redis: 
+    image: redis:latest 
+    container_name: redis 
+    network_mode: "host"
+    ports: 
+      - 6379:6379 
+    # networks: 
+    #   - monitoring 
+
+volumes:
+  grafana-data:
